@@ -19,9 +19,30 @@ function expandTable(line) {
   return prefix ? `${prefix}\n\n${markdown}` : markdown
 }
 
+const ISO_TIME = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})/g
+
+const clock = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZoneName: "short",
+})
+
+export function formatClockTime(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return clock.format(date)
+}
+
+function formatTimes(text) {
+  return text.replace(ISO_TIME, (value) => formatClockTime(value))
+}
+
 export function formatAgentText(text) {
   if (!text) return ""
-  return text
+  return formatTimes(text)
     .split("\n")
     .map((line) => (isCollapsedTable(line) ? expandTable(line) : line))
     .join("\n")

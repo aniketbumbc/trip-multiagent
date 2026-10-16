@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { checkHealth, planTrip } from "./api.js"
+import { checkHealth, planTripStream } from "./api.js"
 import { formatAgentText } from "./formatAnswer.js"
 
 const PROMPTS = [
@@ -20,10 +20,10 @@ const PROMPTS = [
 ]
 
 const STEPS = [
-  { label: "Flights", detail: "Checking the route" },
-  { label: "Hotels", detail: "Reading stay notes" },
-  { label: "Days", detail: "Laying out the trip" },
-  { label: "Write-up", detail: "Putting it in one piece" },
+  { id: "flight_agent", label: "Flights", detail: "Checking the route" },
+  { id: "hotel_agent", label: "Hotels", detail: "Reading stay notes" },
+  { id: "itinerary_agent", label: "Days", detail: "Laying out the trip" },
+  { id: "result_agent", label: "Write-up", detail: "Putting it in one piece" },
 ]
 
 const PANELS = [
@@ -45,7 +45,8 @@ export default function App() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [online, setOnline] = useState(null)
-  const [step, setStep] = useState(0)
+  const [activeStep, setActiveStep] = useState(null)
+  const [doneSteps, setDoneSteps] = useState([])
   const [panel, setPanel] = useState("answer")
 
   useEffect(() => {
@@ -62,13 +63,15 @@ export default function App() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!loading) return undefined
-    const timer = setInterval(() => {
-      setStep((current) => (current + 1) % STEPS.length)
-    }, 2200)
-    return () => clearInterval(timer)
-  }, [loading])
+  function onStep(event) {
+    if (event.status === "completed") {
+      setDoneSteps((current) => (current.includes(event.step) ? current : [...current, event.step]))
+      setActiveStep((current) => (current === event.step ? null : current))
+    }
+    if (event.status === "started") {
+      setActiveStep(event.step)
+    }
+  }
 
   async function submitTrip(event) {
     event.preventDefault()
@@ -77,11 +80,12 @@ export default function App() {
 
     setLoading(true)
     setError("")
-    setStep(0)
+    setActiveStep(null)
+    setDoneSteps([])
     setPanel("answer")
 
     try {
-      const data = await planTrip(userQuery, threadId)
+      const data = await planTripStream(userQuery, threadId, onStep)
       setResult({ ...data, userQuery })
       setThreadId(data.thread_id)
       setOnline(true)
@@ -192,18 +196,26 @@ export default function App() {
 
       {loading && (
         <section className="mt-6 rounded-[28px] border border-ink/10 bg-sea px-5 py-6 text-cream">
-          <p className="text-sm tracking-[0.16em] text-cream/70 uppercase">On the road</p>
+          <p className="text-sm tracking-[0.16em] text-cream/70 uppercase">
+            On the road{activeStep ? ` · ${STEPS.find((item) => item.id === activeStep)?.label}` : ""}
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             {STEPS.map((item, index) => {
-              const active = index === step
-              const done = index < step
+              const active = item.id === activeStep
+              const done = doneSteps.includes(item.id)
               return (
                 <div key={item.label} className="relative flex items-center gap-3">
-                  <span className={`relative grid h-8 w-8 place-items-center rounded-full text-sm ${active ? "step-live bg-clay text-cream" : done ? "bg-gold text-ink" : "bg-cream/15 text-cream/80"}`}>
+                  <span className={`relative grid h-8 w-8 place-items-center rounded-full text-sm ${active ? "bg-clay text-cream" : done ? "bg-gold text-ink" : "bg-cream/15 text-cream/80"}`}>
+                    {active && (
+                      <>
+                        <span className="step-pulse" />
+                        <span className="step-spin" />
+                      </>
+                    )}
                     {index + 1}
                   </span>
                   <div>
-                    <p className="font-medium">{item.label}</p>
+                    <p className={`font-medium ${active ? "step-label-live" : ""}`}>{item.label}</p>
                     <p className="text-sm text-cream/65">{active ? item.detail : done ? "Done" : "Waiting"}</p>
                   </div>
                 </div>

@@ -45,17 +45,55 @@ body::before {
   --tw-prose-counters: #c24e2a;
 }
 
-@keyframes pulse-ring {
-  0% { transform: scale(0.85); opacity: 0.7; }
-  70% { transform: scale(1.25); opacity: 0; }
-  100% { opacity: 0; }
+@keyframes step-spin {
+  to { transform: rotate(360deg); }
 }
 
-.step-live::after {
-  content: "";
+@keyframes step-pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+@keyframes step-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.step-spin {
   position: absolute;
-  inset: -6px;
+  inset: -5px;
   border-radius: 999px;
-  border: 1px solid #c24e2a;
-  animation: pulse-ring 1.6s ease-out infinite;
+  border: 2px solid rgba(255, 250, 244, 0.2);
+  border-top-color: #fffaf4;
+  border-right-color: #e7a07a;
+  animation: step-spin 0.8s linear infinite;
+}
+
+.step-pulse {
+  position: absolute;
+  inset: -2px;
+  border-radius: 999px;
+  border: 2px solid #e7a07a;
+  animation: step-pulse 1.3s ease-out infinite;
+}
+
+.step-label-live {
+  background-image: linear-gradient(90deg, #fffaf4 0%, #fffaf4 35%, #f0c08a 50%, #fffaf4 65%, #fffaf4 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: step-shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-spin,
+  .step-pulse,
+  .step-label-live {
+    animation: none;
+  }
+
+  .step-label-live {
+    color: #fffaf4;
+    background: none;
+  }
 }
