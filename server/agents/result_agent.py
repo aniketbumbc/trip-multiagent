@@ -35,14 +35,26 @@ def result_agent(state:TravelState) -> TravelState:
     
     """
 
-    response = openai_llm.invoke([
-        SystemMessage(content="You are a helpful assistant that displays the results to the user."),
-        HumanMessage(content=final_prompt)
-    ])
+    try:
+        if not os.getenv("OPENAI_API_KEY"):
+            raise ValueError("OPENAI_API_KEY is not set")
+        response = openai_llm.invoke([
+            SystemMessage(content="You are a helpful assistant that displays the results to the user."),
+            HumanMessage(content=final_prompt)
+        ])
+        answer = response.content
+    except Exception as exc:
+        answer = (
+            "Final summary could not be generated.\n\n"
+            f"Reason: {exc}\n\n"
+            f"Flight results:\n{state.get('flight_results', '')}\n\n"
+            f"Hotel results:\n{state.get('hotel_results', '')}\n\n"
+            f"Itinerary:\n{state.get('itinerary', '')}"
+        )
     return {
-        'final_response':response.content,
+        'final_response':answer,
         'messages':[
-            AIMessage(content=response.content)
+            AIMessage(content=answer)
         ],
         'llm_calls':state.get('llm_calls',0) + 1
     }

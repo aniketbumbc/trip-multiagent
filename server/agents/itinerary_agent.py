@@ -7,10 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is not set")
-
-openai_llm = ChatOpenAI(api_key=OPENAI_API_KEY,model="gpt-5.6-luna")
+openai_llm = ChatOpenAI(api_key=OPENAI_API_KEY,model="gpt-5.6-luna") if OPENAI_API_KEY else None
 
 def itinerary_agent(state:TravelState) -> TravelState:
     """
@@ -24,15 +21,21 @@ def itinerary_agent(state:TravelState) -> TravelState:
     user query: {state.get("user_query","")}
     Create an itinerary for the user cost friendly and time efficient.
     """
-    response = openai_llm.invoke([
-        SystemMessage(content="You are a helpful assistant that creates an itinerary for the user."),
-        HumanMessage(content=prompt)
-    ])
+    try:
+        if openai_llm is None:
+            raise ValueError("OPENAI_API_KEY is not set")
+        response = openai_llm.invoke([
+            SystemMessage(content="You are a helpful assistant that creates an itinerary for the user."),
+            HumanMessage(content=prompt)
+        ])
+        itinerary = response.content
+    except Exception as exc:
+        itinerary = f"Itinerary generation failed: {exc}"
 
     return {
-        'itinerary':response.content,
+        'itinerary':itinerary,
         'messages':[
-            AIMessage(content=response.content)
+            AIMessage(content=itinerary)
         ],
         'llm_calls':state.get('llm_calls',0) + 1
     }
