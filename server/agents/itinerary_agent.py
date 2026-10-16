@@ -24,15 +24,15 @@ def itinerary_agent(state:TravelState) -> TravelState:
     user query: {state.get("user_query","")}
     Create an itinerary for the user cost friendly and time efficient.
     """
-   response = openai_llm.invoke([
-    SystemMessage(content="You are a helpful assistant that creates an itinerary for the user."),
-    HumanMessage(content=prompt)
-   ])
+    response = openai_llm.invoke([
+        SystemMessage(content="You are a helpful assistant that creates an itinerary for the user."),
+        HumanMessage(content=prompt)
+    ])
 
-   return {
-    'itinerary':response.content,
-    'messages':[
-        AIMessage(content=response.content)
-    ],
-    'llm_calls':state.get('llm_calls',0) + 1
-   }
+    return {
+        'itinerary':response.content,
+        'messages':[
+            AIMessage(content=response.content)
+        ],
+        'llm_calls':state.get('llm_calls',0) + 1
+    }

@@ -1,5 +1,5 @@
 from typing import TypedDict,Annotated
-from tools.tavily_tools import search_tavily
+from tools.tavily_tool import search_tavily
 from base import TravelState
 from langchain_core.messages import AIMessage
 

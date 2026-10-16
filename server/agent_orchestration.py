@@ -3,21 +3,26 @@ import certifi
 from typing import TypedDict,Annotated
 import operator
 import uuid
-import psycopg2
-from psycopg2.rows import dict_row
-
-
-from langgraph.graph import StateGraph,START,END
-from langgraph.graph.message import add_messages,update_messages
-from langgraph.checkpoint.memory import MemorySaver
-from langchain_openai import ChatOpenAI
+import psycopg
+from psycopg.rows import dict_row
 from langgraph.checkpoint.postgres import PostgresSaver
-from langchain_core.messages import SystemMessage,HumanMessage,AIMessage
+from graph import graph
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set")
 
+_conn = psycopg.connect(
+    DATABASE_URL,
+    autocommit=True,
+    prepare_threshold=0,
+    row_factory=dict_row,
+)
+checkpoint_saver = PostgresSaver(_conn)
+checkpoint_saver.setup()
 
-
+travel_graph =graph.compile(checkpointer=checkpoint_saver)

@@ -1,7 +1,7 @@
 from typing import TypedDict,Annotated
-from tools.flight_tools import search_flights
+from tools.flight_tool import search_flights
 from base import TravelState
-
+from langchain_core.messages import AIMessage
 def flight_agent(state:TravelState) -> TravelState:
     """
     Flight agent is responsible for finding the best flight for the user.
@@ -14,7 +14,7 @@ def flight_agent(state:TravelState) -> TravelState:
         "llm_calls":state.get("llm_calls",0) + 1
         }
     flights_data = search_flights(query)
-    return {"flight_results":flights_dict,
+    return {"flight_results":flights_data,
     "messages":[
         AIMessage(content="Flight results are fetched successfully")
     ],
